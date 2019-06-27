@@ -13,6 +13,7 @@
 
 #include "dictionary.h"
 #include "real.h"
+#include "utils.h"
 
 namespace fasttext {
 
@@ -25,12 +26,21 @@ class Meter {
     Metrics() : gold(0), predicted(0), predictedGold(0) {}
 
     double precision() const {
+      if (predicted == 0) {
+        return std::numeric_limits<double>::quiet_NaN();
+      }
       return predictedGold / double(predicted);
     }
     double recall() const {
+      if (gold == 0) {
+        return std::numeric_limits<double>::quiet_NaN();
+      }
       return predictedGold / double(gold);
     }
     double f1Score() const {
+      if (predicted + gold == 0) {
+        return std::numeric_limits<double>::quiet_NaN();
+      }
       return 2 * predictedGold / double(predicted + gold);
     }
   };
@@ -38,9 +48,7 @@ class Meter {
  public:
   Meter() : metrics_(), nexamples_(0), labelMetrics_() {}
 
-  void log(
-      const std::vector<int32_t>& labels,
-      const std::vector<std::pair<real, int32_t>>& predictions);
+  void log(const std::vector<int32_t>& labels, const Predictions& predictions);
 
   double precision(int32_t);
   double recall(int32_t);

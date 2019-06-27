@@ -18,8 +18,10 @@ import sys
 import setuptools
 import os
 import subprocess
+import platform
+import io
 
-__version__ = '0.8.22'
+__version__ = '0.9'
 FASTTEXT_SRC = "src"
 
 # Based on https://github.com/pybind/python_example
@@ -63,7 +65,7 @@ ext_modules = [
     Extension(
         str('fasttext_pybind'),
         [
-            str('python/fastText/pybind/fasttext_pybind.cc'),
+            str('python/fasttext_module/fasttext/pybind/fasttext_pybind.cc'),
         ] + fasttext_src_cc,
         include_dirs=[
             # Path to pybind11 headers
@@ -118,6 +120,8 @@ class BuildExt(build_ext):
 
     def build_extensions(self):
         if sys.platform == 'darwin':
+            mac_osx_version = float('.'.join(platform.mac_ver()[0].split('.')[:2]))
+            os.environ['MACOSX_DEPLOYMENT_TARGET'] = str(mac_osx_version)
             all_flags = ['-stdlib=libc++', '-mmacosx-version-min=10.7']
             if has_flag(self.compiler, [all_flags[0]]):
                 self.c_opts['unix'] += [all_flags[0]]
@@ -157,16 +161,16 @@ def _get_readme():
     Use pandoc to generate rst from md.
     pandoc --from=markdown --to=rst --output=python/README.rst python/README.md
     """
-    with open("python/README.rst") as fid:
+    with io.open("python/README.rst", encoding='utf-8') as fid:
         return fid.read()
 
 
 setup(
     name='fasttext',
     version=__version__,
-    author='Christian Puhrsch',
-    author_email='cpuhrsch@fb.com',
-    description='fastText Python bindings',
+    author='Onur Celebi',
+    author_email='celebio@fb.com',
+    description='fasttext Python bindings',
     long_description=_get_readme(),
     ext_modules=ext_modules,
     url='https://github.com/facebookresearch/fastText',
@@ -190,10 +194,10 @@ setup(
     install_requires=['pybind11>=2.2', "setuptools >= 0.7.0", "numpy"],
     cmdclass={'build_ext': BuildExt},
     packages=[
-        str('fastText'),
-        str('fastText.util'),
-        str('fastText.tests'),
+        str('fasttext'),
+        str('fasttext.util'),
+        str('fasttext.tests'),
     ],
-    package_dir={str(''): str('python')},
+    package_dir={str(''): str('python/fasttext_module')},
     zip_safe=False,
 )
