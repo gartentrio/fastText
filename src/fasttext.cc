@@ -819,10 +819,12 @@ void FastText::train(const Args& args) {
     std::shared_ptr<DenseMatrix> input   = std::dynamic_pointer_cast<DenseMatrix>(input_);
     std::shared_ptr<DenseMatrix> output  = std::dynamic_pointer_cast<DenseMatrix>(output_);
     int32_t pwords = 0;
+    fixed_ = std::make_shared<std::vector<bool>>(dict_->nwords());
     for (int32_t n = 0; n < p.dict_->nwords(); n++) {
       int32_t i = dict_->getId(p.dict_->getWord(n));
       if (i >= 0 && i < dict_->nwords()) {
         pwords++;
+        (*fixed_)[i] = args_->fixPretrained;
         for (int32_t j=0; j < args_->dim; j++) {
            input->at(i, j) = pinput->at(n, j);
         }
@@ -838,7 +840,7 @@ void FastText::train(const Args& args) {
 
   auto loss = createLoss(output_);
   bool normalizeGradient = (args_->model == model_name::sup || args_->model == model_name::sent2vec);
-  model_ = std::make_shared<Model>(input_, output_, loss, normalizeGradient);
+  model_ = std::make_shared<Model>(input_, output_, loss, normalizeGradient, fixed_);
   startThreads();
 }
 

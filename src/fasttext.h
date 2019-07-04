@@ -37,6 +37,7 @@ class FastText {
 
   std::shared_ptr<Matrix> input_;
   std::shared_ptr<Matrix> output_;
+  std::shared_ptr<std::vector<bool>> fixed_;
 
   std::shared_ptr<Model> model_;
 

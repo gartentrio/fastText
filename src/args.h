@@ -49,6 +49,7 @@ class Args {
   int verbose;
   std::string pretrainedVectors;
   std::string pretrained;
+  bool fixPretrained;
   bool saveOutput;
   bool saveVectors;
 
