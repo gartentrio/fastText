@@ -800,6 +800,42 @@ void FastText::train(const Args& args) {
     input_ = createRandomMatrix();
   }
   output_ = createTrainOutputMatrix();
+
+  if (!args_->pretrained.empty()) {
+    FastText p;
+    p.loadModel(args_->pretrained);
+    if (p.args_->dim != args_->dim) {
+      throw std::invalid_argument(
+          "Dimension of pretrained model (" + std::to_string(p.args_->dim) +
+          ") does not match dimension (" + std::to_string(args_->dim) + ")!");
+    }
+    if (p.args_->model == model_name::sup) {
+        throw std::invalid_argument(
+            "Supervised models cannot be used as pretrained models");
+    }
+
+    std::shared_ptr<DenseMatrix> pinput  = std::dynamic_pointer_cast<DenseMatrix>(p.input_);
+    std::shared_ptr<DenseMatrix> poutput = std::dynamic_pointer_cast<DenseMatrix>(p.output_);
+    std::shared_ptr<DenseMatrix> input   = std::dynamic_pointer_cast<DenseMatrix>(input_);
+    std::shared_ptr<DenseMatrix> output  = std::dynamic_pointer_cast<DenseMatrix>(output_);
+    int32_t pwords = 0;
+    for (int32_t n = 0; n < p.dict_->nwords(); n++) {
+      int32_t i = dict_->getId(p.dict_->getWord(n));
+      if (i >= 0 && i < dict_->nwords()) {
+        pwords++;
+        for (int32_t j=0; j < args_->dim; j++) {
+           input->at(i, j) = pinput->at(n, j);
+        }
+        if (args_->model != model_name::sup) {
+          for (int32_t j=0; j < args_->dim; j++) {
+            output->at(i, j) = poutput->at(n, j);
+          }
+        }
+      }
+    }
+    std::cerr << "Pretrained words: " << pwords << std::endl;
+  }
+
   auto loss = createLoss(output_);
   bool normalizeGradient = (args_->model == model_name::sup || args_->model == model_name::sent2vec);
   model_ = std::make_shared<Model>(input_, output_, loss, normalizeGradient);
