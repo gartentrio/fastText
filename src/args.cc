@@ -78,6 +78,8 @@ std::string Args::modelToString(model_name mn) const {
       return "sg";
     case model_name::sup:
       return "sup";
+    case model_name::sent2vec:
+      return "sent2vec";
   }
   return "Unknown model name!"; // should never happen
 }
