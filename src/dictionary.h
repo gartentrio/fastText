@@ -62,6 +62,11 @@ class Dictionary {
   static const std::string BOW;
   static const std::string EOW;
 
+  static const int32_t OMIT_EOS = 0x01;
+  static const int32_t OMIT_OOV = 0x02;
+  static const int32_t OMIT_RND = 0x04;
+  static const int32_t OMIT_LNG = 0x08;
+
   explicit Dictionary(std::shared_ptr<Args>);
   explicit Dictionary(std::shared_ptr<Args>, std::istream&);
   int32_t nwords() const;
@@ -106,7 +111,7 @@ class Dictionary {
       const;
   int32_t getLine(std::istream&, std::vector<int32_t>&, std::minstd_rand&)
       const;
-  int32_t getSent(std::istream&, std::vector<int32_t>&, std::vector<int32_t>&)
+  int32_t getLine(std::istream&, std::vector<int32_t>&, std::vector<int32_t>&, std::vector<int32_t>&, std::minstd_rand&, int32_t flags = 0)
     const;
   void threshold(int64_t, int64_t);
   void prune(std::vector<int32_t>&);

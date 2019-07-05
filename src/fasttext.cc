@@ -691,7 +691,7 @@ void FastText::trainThread(int32_t threadId) {
       localTokenCount += dict_->getLine(ifs, line, labels);
       supervised(state, lr, line, labels);
     } else if (args_->model == model_name::sent2vec) {
-      localTokenCount += dict_->getSent(ifs, line, hashes);
+      localTokenCount += dict_->getLine(ifs, line, hashes, labels, state.rng, Dictionary::OMIT_EOS | Dictionary::OMIT_OOV);
       sent2vec(state, lr, line, hashes);
     } else if (args_->model == model_name::cbow) {
       localTokenCount += dict_->getLine(ifs, line, state.rng);
