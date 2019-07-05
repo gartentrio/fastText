@@ -257,7 +257,7 @@ void FastText::loadModel(std::istream& in) {
   output_->load(in);
 
   auto loss = createLoss(output_);
-  bool normalizeGradient = (args_->model == model_name::sup);
+  bool normalizeGradient = (args_->model == model_name::sup || args_->model == model_name::sent2vec);
   model_ = std::make_shared<Model>(input_, output_, loss, normalizeGradient);
 }
 
@@ -368,6 +368,33 @@ void FastText::supervised(
     std::uniform_int_distribution<> uniform(0, labels.size() - 1);
     int32_t i = uniform(state.rng);
     model_->update(line, labels, i, lr, state);
+  }
+}
+
+void FastText::sent2vec(
+    Model::State& state, 
+    real lr, 
+    const std::vector<int32_t>& line, 
+    const std::vector<int32_t>& hashes) {
+  if (line.size() <= 1) return;
+  std::vector<int32_t> bow, boh;
+  std::uniform_real_distribution<> uniform(0, 1);
+  for (int32_t w = 0; w < line.size(); w++) {
+    // once per iteration discard rare or random target words
+    if (dict_->discard(line[w], uniform(state.rng)) || dict_->getTokenCount(line[w]) < args_->minCountLabel)
+      continue;
+    bow = line;
+    boh = hashes;
+    // set target word to <PLACEHOLDER>
+    bow[w] = 0;
+    boh[w] = 0;
+    // original impl uses word id for ngrams instead of token hash
+    if (args_->dropoutK) {
+      dict_->addWordNgrams(bow, boh, args_->wordNgrams, args_->dropoutK, state.rng);
+    } else {
+      dict_->addWordNgrams(bow, boh, args_->wordNgrams);
+    }
+    model_->update(bow, line, w, lr, state);
   }
 }
 
@@ -656,13 +683,16 @@ void FastText::trainThread(int32_t threadId) {
 
   const int64_t ntokens = dict_->ntokens();
   int64_t localTokenCount = 0;
-  std::vector<int32_t> line, labels;
+  std::vector<int32_t> line, labels, hashes;
   while (tokenCount_ < args_->epoch * ntokens) {
     real progress = real(tokenCount_) / (args_->epoch * ntokens);
     real lr = args_->lr * (1.0 - progress);
     if (args_->model == model_name::sup) {
       localTokenCount += dict_->getLine(ifs, line, labels);
       supervised(state, lr, line, labels);
+    } else if (args_->model == model_name::sent2vec) {
+      localTokenCount += dict_->getSent(ifs, line, hashes);
+      sent2vec(state, lr, line, hashes);
     } else if (args_->model == model_name::cbow) {
       localTokenCount += dict_->getLine(ifs, line, state.rng);
       cbow(state, lr, line);
@@ -771,7 +801,7 @@ void FastText::train(const Args& args) {
   }
   output_ = createTrainOutputMatrix();
   auto loss = createLoss(output_);
-  bool normalizeGradient = (args_->model == model_name::sup);
+  bool normalizeGradient = (args_->model == model_name::sup || args_->model == model_name::sent2vec);
   model_ = std::make_shared<Model>(input_, output_, loss, normalizeGradient);
   startThreads();
 }

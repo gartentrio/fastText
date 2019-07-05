@@ -20,6 +20,7 @@ void printUsage() {
       << "usage: fasttext <command> <args>\n\n"
       << "The commands supported by fasttext are:\n\n"
       << "  supervised              train a supervised classifier\n"
+      << "  sent2vec                train unsupervised sentence embeddings\n"
       << "  quantize                quantize a model to reduce the memory usage\n"
       << "  test                    evaluate a supervised classifier\n"
       << "  test-label              print labels with precision and recall scores\n"
@@ -409,7 +410,7 @@ int main(int argc, char** argv) {
     exit(EXIT_FAILURE);
   }
   std::string command(args[1]);
-  if (command == "skipgram" || command == "cbow" || command == "supervised") {
+  if (command == "skipgram" || command == "cbow" || command == "supervised" || command == "sent2vec") {
     train(args);
   } else if (command == "test" || command == "test-label") {
     test(args);

@@ -120,9 +120,6 @@ void Dictionary::getSubwords(
 bool Dictionary::discard(int32_t id, real rand) const {
   assert(id >= 0);
   assert(id < nwords_);
-  if (args_->model == model_name::sup) {
-    return false;
-  }
   return rand > pdiscard_[id];
 }
 
@@ -150,6 +147,12 @@ std::string Dictionary::getWord(int32_t id) const {
   assert(id >= 0);
   assert(id < size_);
   return words_[id].word;
+}
+
+int64_t Dictionary::getTokenCount(int32_t id) const {
+  assert(id >= 0);
+  assert(id < size_);
+  return words_[id].count;
 }
 
 // The correct implementation of fnv should be:
@@ -244,9 +247,22 @@ void Dictionary::readFromFile(std::istream& in) {
       threshold(minThreshold, minThreshold);
     }
   }
+  if (args_->model == model_name::sent2vec) {
+    int32_t h = find("<PLACEHOLDER>");
+    entry e;
+    e.word = "<PLACEHOLDER>";
+    e.count = 1e+18;
+    e.type = entry_type::word;
+    words_.push_back(e);
+    word2int_[h] = size_++;
+  }
   threshold(args_->minCount, args_->minCountLabel);
   initTableDiscard();
   initNgrams();
+  if (args_->model == model_name::sent2vec) {
+    assert(words_[0].word == "<PLACEHOLDER>");
+    words_[0].count = 0;
+  }
   if (args_->verbose > 0) {
     std::cerr << "\rRead " << ntokens_ / 1000000 << "M words" << std::endl;
     std::cerr << "Number of words:  " << nwords_ << std::endl;
@@ -316,6 +332,35 @@ void Dictionary::addWordNgrams(
   for (int32_t i = 0; i < hashes.size(); i++) {
     uint64_t h = hashes[i];
     for (int32_t j = i + 1; j < hashes.size() && j < i + n; j++) {
+      h = h * 116049371 + hashes[j];
+      pushHash(line, h % args_->bucket);
+    }
+  }
+}
+
+void Dictionary::addWordNgrams(
+    std::vector<int32_t>& line,
+    const std::vector<int32_t>& hashes,
+    int32_t n, 
+    int32_t k, 
+    std::minstd_rand& rng) const {
+  int32_t num_discarded = 0;
+  std::vector<bool> discard;
+  const int32_t size = hashes.size(); 
+  discard.resize(size, false);
+  std::uniform_int_distribution<> uniform(1, size);
+  while (num_discarded < k && size - num_discarded > 2) {
+    int32_t token_to_discard = uniform(rng);
+    if (!discard[token_to_discard]) {
+      discard[token_to_discard] = true;
+      num_discarded++;
+    }
+  }
+  for (int32_t i = 0; i < size; i++) {
+    if (discard[i]) continue;
+    uint64_t h = hashes[i];
+    for (int32_t j = i + 1; j < size && j < i + n; j++) {
+      if (discard[j]) break;
       h = h * 116049371 + hashes[j];
       pushHash(line, h % args_->bucket);
     }
@@ -403,6 +448,37 @@ int32_t Dictionary::getLine(
     }
   }
   addWordNgrams(words, word_hashes, args_->wordNgrams);
+  return ntokens;
+}
+
+int32_t Dictionary::getSent(
+    std::istream& in,
+    std::vector<int32_t>& words,
+    std::vector<int32_t>& word_hashes) const {
+  std::string token;
+  int32_t ntokens = 0;
+
+  reset(in);
+  words.clear();
+  word_hashes.clear();
+  while (readWord(in, token)) {
+    // exclude EOS from line
+    if (token == EOS) {
+       break;
+    }
+    uint32_t h = hash(token);
+    int32_t wid = getId(token, h);
+    if (wid < 0) {
+      continue;
+    }
+    entry_type type = getType(wid);
+
+    ntokens++;
+    if (type == entry_type::word) {
+      words.push_back(wid);
+      word_hashes.push_back(h);
+    }
+  }
   return ntokens;
 }
 
