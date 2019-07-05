@@ -433,6 +433,34 @@ void FastText::skipgram(
   }
 }
 
+void FastText::pvdm(
+    Model::State& state, 
+    real lr,
+    const std::vector<int32_t>& line,
+    const std::vector<int32_t>& hashes,
+    const std::vector<int32_t>& labels) {
+  if (labels.size() == 0 || line.size() == 0) return;
+  std::vector<int32_t> bow, boh;
+  std::uniform_int_distribution<> uniform(1, args_->ws);
+  for (int32_t w = 0; w < line.size(); w++) {
+    int32_t boundary = uniform(state.rng);
+    bow.clear();
+    boh.clear();
+    for (int32_t c = -boundary; c <= boundary; c++) {
+      if (c != 0 && w + c >= 0 && w + c < line.size()) {
+        const std::vector<int32_t>& ngrams = dict_->getSubwords(line[w + c]);
+        bow.insert(bow.end(), ngrams.cbegin(), ngrams.cend());
+        boh.insert(boh.end(), hashes[w + c]);
+      }
+    }
+    dict_->addWordNgrams(bow, boh, args_->wordNgrams);
+    for (auto it = labels.cbegin(); it != labels.cend(); ++it) {
+      bow.insert(bow.end(), *it + dict_->nwords() + args_->bucket);
+    }
+    model_->update(bow, line, w, lr, state);
+  }
+}
+
 std::tuple<int64_t, double, double>
 FastText::test(std::istream& in, int32_t k, real threshold) {
   Meter meter;
@@ -699,6 +727,9 @@ void FastText::trainThread(int32_t threadId) {
     } else if (args_->model == model_name::sg) {
       localTokenCount += dict_->getLine(ifs, line, state.rng);
       skipgram(state, lr, line);
+    } else if (args_->model == model_name::pvdm) {
+      localTokenCount += dict_->getLine(ifs, line, hashes, labels, state.rng, Dictionary::OMIT_EOS | Dictionary::OMIT_OOV);
+      pvdm(state, lr, line, hashes, labels);
     }
     if (localTokenCount > args_->lrUpdateRate) {
       tokenCount_ += localTokenCount;
@@ -742,7 +773,7 @@ std::shared_ptr<Matrix> FastText::getInputMatrixFromFile(
   dict_->threshold(1, 0);
   dict_->init();
   std::shared_ptr<DenseMatrix> input = std::make_shared<DenseMatrix>(
-      dict_->nwords() + args_->bucket, args_->dim);
+      dict_->nwords() + dict_->nlabels() + args_->bucket, args_->dim);
   input->uniform(1.0 / args_->dim);
 
   for (size_t i = 0; i < n; i++) {
@@ -763,7 +794,7 @@ void FastText::loadVectors(const std::string& filename) {
 
 std::shared_ptr<Matrix> FastText::createRandomMatrix() const {
   std::shared_ptr<DenseMatrix> input = std::make_shared<DenseMatrix>(
-      dict_->nwords() + args_->bucket, args_->dim);
+      dict_->nwords() + dict_->nlabels() + args_->bucket, args_->dim);
   input->uniform(1.0 / args_->dim);
 
   return input;
@@ -839,7 +870,10 @@ void FastText::train(const Args& args) {
   }
 
   auto loss = createLoss(output_);
-  bool normalizeGradient = (args_->model == model_name::sup || args_->model == model_name::sent2vec);
+  bool normalizeGradient = (
+      args_->model == model_name::sup || 
+      args_->model == model_name::sent2vec || 
+      args_->model == model_name::pvdm);
   model_ = std::make_shared<Model>(input_, output_, loss, normalizeGradient, fixed_);
   startThreads();
 }

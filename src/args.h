@@ -15,7 +15,7 @@
 
 namespace fasttext {
 
-enum class model_name : int { cbow = 1, sg, sup, sent2vec };
+enum class model_name : int { cbow = 1, sg, sup, sent2vec, pvdm };
 enum class loss_name : int { hs = 1, ns, softmax, ova };
 
 class Args {

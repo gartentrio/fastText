@@ -28,6 +28,7 @@ void printUsage() {
       << "  predict-prob            predict most likely labels with probabilities\n"
       << "  skipgram                train a skipgram model\n"
       << "  cbow                    train a cbow model\n"
+      << "  pvdm                    train a pvdm model\n"
       << "  print-word-vectors      print word vectors given a trained model\n"
       << "  print-sentence-vectors  print sentence vectors given a trained model\n"
       << "  print-ngrams            print ngrams given a trained model and word\n"
@@ -410,7 +411,7 @@ int main(int argc, char** argv) {
     exit(EXIT_FAILURE);
   }
   std::string command(args[1]);
-  if (command == "skipgram" || command == "cbow" || command == "supervised" || command == "sent2vec") {
+  if (command == "skipgram" || command == "cbow" || command == "supervised" || command == "sent2vec" || command == "pvdm") {
     train(args);
   } else if (command == "test" || command == "test-label") {
     test(args);
