@@ -442,6 +442,7 @@ void FastText::pvdm(
   if (labels.size() == 0 || line.size() == 0) return;
   std::vector<int32_t> bow, boh;
   std::uniform_int_distribution<> uniform(1, args_->ws);
+  std::uniform_int_distribution<> uniformLabels(0, labels.size() - 1);
   for (int32_t w = 0; w < line.size(); w++) {
     int32_t boundary = uniform(state.rng);
     bow.clear();
@@ -454,9 +455,9 @@ void FastText::pvdm(
       }
     }
     dict_->addWordNgrams(bow, boh, args_->wordNgrams);
-    for (auto it = labels.cbegin(); it != labels.cend(); ++it) {
-      bow.insert(bow.end(), *it + dict_->nwords() + args_->bucket);
-    }
+    int32_t i = uniformLabels(state.rng);
+    int32_t i = uniform(state.rng);
+    bow.insert(bow.end(), labels[i] + dict_->nwords() + args_->bucket);
     model_->update(bow, line, w, lr, state);
   }
 }
