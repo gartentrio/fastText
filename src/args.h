@@ -48,8 +48,8 @@ class Args {
   std::string label;
   int verbose;
   std::string pretrainedVectors;
-  std::string pretrained;
-  bool fixPretrained;
+  std::string pretrainedModel;
+  bool freeze;
   bool saveOutput;
   bool saveVectors;
 

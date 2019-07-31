@@ -456,7 +456,6 @@ void FastText::pvdm(
     }
     dict_->addWordNgrams(bow, boh, args_->wordNgrams);
     int32_t i = uniformLabels(state.rng);
-    int32_t i = uniform(state.rng);
     bow.insert(bow.end(), labels[i] + dict_->nwords() + args_->bucket);
     model_->update(bow, line, w, lr, state);
   }
@@ -826,48 +825,50 @@ void FastText::train(const Args& args) {
   dict_->readFromFile(ifs);
   ifs.close();
 
-  if (!args_->pretrainedVectors.empty()) {
-    input_ = getInputMatrixFromFile(args_->pretrainedVectors);
-  } else {
-    input_ = createRandomMatrix();
-  }
-  output_ = createTrainOutputMatrix();
-
-  if (!args_->pretrained.empty()) {
-    FastText p;
-    p.loadModel(args_->pretrained);
-    if (p.args_->dim != args_->dim) {
+  if (!args_->pretrainedModel.empty()) {
+    FastText pretrained;
+    pretrained.loadModel(args_->pretrainedModel);
+    if (pretrained.args_->dim != args_->dim) {
       throw std::invalid_argument(
-          "Dimension of pretrained model (" + std::to_string(p.args_->dim) +
+          "Dimension of pretrained model (" + std::to_string(pretrained.args_->dim) +
           ") does not match dimension (" + std::to_string(args_->dim) + ")!");
     }
-    if (p.args_->model == model_name::sup) {
+    if (pretrained.args_->model == model_name::sup) {
         throw std::invalid_argument(
             "Supervised models cannot be used as pretrained models");
     }
+    
+    int32_t existing = dict_->addWords(pretrained.dict_);
+    std::cerr << "Pretrained words: " << existing << std::endl;
 
-    std::shared_ptr<DenseMatrix> pinput  = std::dynamic_pointer_cast<DenseMatrix>(p.input_);
-    std::shared_ptr<DenseMatrix> poutput = std::dynamic_pointer_cast<DenseMatrix>(p.output_);
-    std::shared_ptr<DenseMatrix> input   = std::dynamic_pointer_cast<DenseMatrix>(input_);
-    std::shared_ptr<DenseMatrix> output  = std::dynamic_pointer_cast<DenseMatrix>(output_);
-    int32_t pwords = 0;
-    fixed_ = std::make_shared<std::vector<bool>>(dict_->nwords());
-    for (int32_t n = 0; n < p.dict_->nwords(); n++) {
-      int32_t i = dict_->getId(p.dict_->getWord(n));
-      if (i >= 0 && i < dict_->nwords()) {
-        pwords++;
-        (*fixed_)[i] = args_->fixPretrained;
-        for (int32_t j=0; j < args_->dim; j++) {
-           input->at(i, j) = pinput->at(n, j);
-        }
+    shared_ = std::make_shared<std::vector<bool>>(dict_->nwords());
+    input_ = createRandomMatrix();
+    output_ = createTrainOutputMatrix();
+    
+    for (int32_t i = 0; i < pretrained.dict_->nwords(); i++) {
+      int32_t k = dict_->getId(pretrained.dict_->getWord(i));
+      if (k >= 0 && k < dict_->nwords()) {
+        (*shared_)[k] = true;
+        pretrained.input_->setRowToMatrix(i, *input_, k);
         if (args_->model != model_name::sup) {
-          for (int32_t j=0; j < args_->dim; j++) {
-            output->at(i, j) = poutput->at(n, j);
-          }
+          pretrained.output_->setRowToMatrix(i, *output_, k);
         }
       }
     }
-    std::cerr << "Pretrained words: " << pwords << std::endl;
+    if (pretrained.args_->bucket == args_->bucket) {
+      for (int32_t i = 0; i < args_->bucket; i++) {
+        pretrained.input_->setRowToMatrix(i + pretrained.dict_->nwords(), 
+            *input_, i + dict_->nwords());
+      }
+    }
+  } else {
+    if (!args_->pretrainedVectors.empty()) {
+      input_ = getInputMatrixFromFile(args_->pretrainedVectors);
+      output_ = createTrainOutputMatrix();
+    } else {
+      input_ = createRandomMatrix();
+      output_ = createTrainOutputMatrix();
+    }
   }
 
   auto loss = createLoss(output_);
@@ -875,7 +876,8 @@ void FastText::train(const Args& args) {
       args_->model == model_name::sup || 
       args_->model == model_name::sent2vec || 
       args_->model == model_name::pvdm);
-  model_ = std::make_shared<Model>(input_, output_, loss, normalizeGradient, fixed_);
+  model_ = std::make_shared<Model>(input_, output_, loss, normalizeGradient, 
+      args_->freeze ? shared_ : nullptr);
   startThreads();
 }
 

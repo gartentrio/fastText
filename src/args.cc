@@ -36,8 +36,8 @@ Args::Args() {
   label = "__label__";
   verbose = 2;
   pretrainedVectors = "";
-  pretrained = "";
-  fixPretrained = false;
+  pretrainedModel = "";
+  freeze = false;
   saveVectors = false;
   saveOutput = false;
 
@@ -175,10 +175,10 @@ void Args::parseArgs(const std::vector<std::string>& args) {
         verbose = std::stoi(args.at(ai + 1));
       } else if (args[ai] == "-pretrainedVectors") {
         pretrainedVectors = std::string(args.at(ai + 1));
-      } else if (args[ai] == "-pretrained") {
-        pretrained = std::string(args.at(ai + 1));
-      } else if (args[ai] == "-fixPretrained") {
-        fixPretrained = true;
+      } else if (args[ai] == "-pretrainedModel") {
+        pretrainedModel = std::string(args.at(ai + 1));
+      } else if (args[ai] == "-freeze") {
+        freeze = true;
         ai--;
       } else if (args[ai] == "-saveOutput") {
         saveOutput = true;
@@ -268,11 +268,11 @@ void Args::printTrainingHelp() {
       << "  -thread             number of threads [" << thread << "]\n"
       << "  -pretrainedVectors  pretrained word vectors for supervised learning ["
       << pretrainedVectors << "]\n"
-      << "  -pretrained         pretrained model for all learning tasks ["
-      << pretrained << "]\n"
-      << "  -fixPretrained      whether weights from pretrained model should be fixed ["
-      << boolToString(fixPretrained) << "]\n"
-      << pretrained << "]\n"
+      << "  -pretrainedModel    pretrained model ["
+      << pretrainedModel << "]\n"
+      << "  -freeze             whether weights from pretrained model should be frozen ["
+      << boolToString(freeze) << "]\n"
+      << pretrainedModel << "]\n"
       << "  -saveOutput         whether output params should be saved ["
       << boolToString(saveOutput) << "]\n"
       << "  -saveVectors        whether vectors should be saved ["

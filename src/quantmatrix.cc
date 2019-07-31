@@ -60,6 +60,14 @@ real QuantMatrix::dotRow(const Vector& vec, int64_t i) const {
   return pq_->mulcode(vec, codes_.data(), i, norm);
 }
 
+void QuantMatrix::setRowToMatrix(int64_t, Matrix&, int64_t) {
+  throw std::runtime_error("Operation not permitted on quantized matrices.");
+}
+
+void QuantMatrix::setVectorToRow(const Vector&, int64_t) {
+  throw std::runtime_error("Operation not permitted on quantized matrices.");
+}
+
 void QuantMatrix::addVectorToRow(const Vector&, int64_t, real) {
   throw std::runtime_error("Operation not permitted on quantized matrices.");
 }

@@ -99,6 +99,25 @@ real DenseMatrix::dotRow(const Vector& vec, int64_t i) const {
   return d;
 }
 
+void DenseMatrix::setRowToMatrix(int64_t i, Matrix& A, int64_t k) {
+  assert(i >= 0);
+  assert(i < m_);
+  assert(A.size(0) >= k);
+  assert(A.size(1) == n_);
+  Vector v(n_);
+  addRowToVector(v, i);
+  A.setVectorToRow(v, k);
+}
+
+void DenseMatrix::setVectorToRow(const Vector& vec, int64_t i) {
+  assert(i >= 0);
+  assert(i < m_);
+  assert(vec.size() == n_);
+  for (int64_t j = 0; j < n_; j++) {
+    data_[i * n_ + j] += vec[j];
+  }
+}
+
 void DenseMatrix::addVectorToRow(const Vector& vec, int64_t i, real a) {
   assert(i >= 0);
   assert(i < m_);

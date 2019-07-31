@@ -33,6 +33,8 @@ class Matrix {
   int64_t size(int64_t dim) const;
 
   virtual real dotRow(const Vector&, int64_t) const = 0;
+  virtual void setRowToMatrix(int64_t, Matrix&, int64_t) = 0;
+  virtual void setVectorToRow(const Vector&, int64_t) = 0;
   virtual void addVectorToRow(const Vector&, int64_t, real) = 0;
   virtual void addRowToVector(Vector& x, int32_t i) const = 0;
   virtual void addRowToVector(Vector& x, int32_t i, real a) const = 0;

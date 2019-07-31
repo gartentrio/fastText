@@ -103,6 +103,7 @@ class Dictionary {
   void add(const std::string&);
   bool readWord(std::istream&, std::string&) const;
   void readFromFile(std::istream&);
+  int32_t addWords(std::shared_ptr<Dictionary>);
   std::string getLabel(int32_t) const;
   void save(std::ostream&) const;
   void load(std::istream&);

@@ -37,7 +37,7 @@ class FastText {
 
   std::shared_ptr<Matrix> input_;
   std::shared_ptr<Matrix> output_;
-  std::shared_ptr<std::vector<bool>> fixed_;
+  std::shared_ptr<std::vector<bool>> shared_;
 
   std::shared_ptr<Model> model_;
 
@@ -67,7 +67,7 @@ class FastText {
       real lr,
       const std::vector<int32_t>& line,
       const std::vector<int32_t>& labels);
-  void sent2vec(Model::State& state, real lr, const std::vector<int32_t>& line, const std::vector<int32_t>& hashes);
+  void sent2vec(Model::State &state, real lr, const std::vector<int32_t> &line, const std::vector<int32_t> &hashes);
   void cbow(Model::State& state, real lr, const std::vector<int32_t>& line);
   void skipgram(Model::State& state, real lr, const std::vector<int32_t>& line);
   void pvdm(Model::State& state, real lr, const std::vector<int32_t>& line, const std::vector<int32_t>& hashes, const std::vector<int32_t>& labels);

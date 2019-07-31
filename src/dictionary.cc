@@ -234,6 +234,40 @@ bool Dictionary::readWord(std::istream& in, std::string& word) const {
   return !word.empty();
 }
 
+int32_t Dictionary::addWords(std::shared_ptr<Dictionary> dict) {
+  int32_t existing = 0;
+  for (int32_t i = 0; i < dict->nwords_; i++) {
+    const std::string& w = dict->words_[i].word;
+    int32_t c = dict->words_[i].count;
+    int32_t h = find(w);
+    if (word2int_[h] == -1) {
+      entry e;
+      e.word = w;
+      e.count = c;
+      e.type = getType(w);
+      words_.push_back(e);
+      word2int_[h] = size_++;
+    } else {
+      if (w == "</s>") {
+        words_[word2int_[h]].count = c;
+      } else {
+        existing++;
+      }
+    }
+  }
+  if (args_->model == model_name::sent2vec) {
+    assert(words_[0].word == "<PLACEHOLDER>");
+    words_[0].count = 1e+18;
+  }
+  threshold(0, 0);
+  init();
+  if (args_->model == model_name::sent2vec) {
+    assert(words_[0].word == "<PLACEHOLDER>");
+    words_[0].count = 0;
+  }
+  return existing;
+}
+
 void Dictionary::readFromFile(std::istream& in) {
   std::string word;
   int64_t minThreshold = 1;
@@ -247,6 +281,7 @@ void Dictionary::readFromFile(std::istream& in) {
       threshold(minThreshold, minThreshold);
     }
   }
+
   if (args_->model == model_name::sent2vec) {
     int32_t h = find("<PLACEHOLDER>");
     entry e;
@@ -256,13 +291,16 @@ void Dictionary::readFromFile(std::istream& in) {
     words_.push_back(e);
     word2int_[h] = size_++;
   }
+
   threshold(args_->minCount, args_->minCountLabel);
   initTableDiscard();
   initNgrams();
+
   if (args_->model == model_name::sent2vec) {
     assert(words_[0].word == "<PLACEHOLDER>");
     words_[0].count = 0;
   }
+
   if (args_->verbose > 0) {
     std::cerr << "\rRead " << ntokens_ / 1000000 << "M words" << std::endl;
     std::cerr << "Number of words:  " << nwords_ << std::endl;

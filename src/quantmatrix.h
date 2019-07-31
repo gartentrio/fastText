@@ -49,6 +49,8 @@ class QuantMatrix : public Matrix {
   void quantize(DenseMatrix&& mat);
 
   real dotRow(const Vector&, int64_t) const override;
+  void setRowToMatrix(int64_t, Matrix&, int64_t) override;
+  void setVectorToRow(const Vector&, int64_t) override;
   void addVectorToRow(const Vector&, int64_t, real) override;
   void addRowToVector(Vector& x, int32_t i) const override;
   void addRowToVector(Vector& x, int32_t i, real a) const override;
