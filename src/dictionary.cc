@@ -479,7 +479,7 @@ int32_t Dictionary::getLine(
       addSubwords(words, token, wid);
       word_hashes.push_back(h);
     } else if (type == entry_type::label && wid >= 0) {
-      labels.push_back(wid - nwords_);
+      labels.push_back(wid);
     }
     if (token == EOS) {
       break;
@@ -529,7 +529,7 @@ int32_t Dictionary::getLine(
       words.push_back(wid);
       word_hashes.push_back(h);
     } else if (type == entry_type::label && wid >= 0) {
-      labels.push_back(wid - nwords_);
+      labels.push_back(wid);
     }
     if (flags & OMIT_LNG) {
       if (ntokens > MAX_LINE_SIZE) {
@@ -554,7 +554,7 @@ void Dictionary::pushHash(std::vector<int32_t>& hashes, int32_t id) const {
       return;
     }
   }
-  hashes.push_back(nwords_ + id);
+  hashes.push_back(nwords_ + nlabels_ + id);
 }
 
 std::string Dictionary::getLabel(int32_t lid) const {
@@ -627,7 +627,7 @@ void Dictionary::init() {
 void Dictionary::prune(std::vector<int32_t>& idx) {
   std::vector<int32_t> words, ngrams;
   for (auto it = idx.cbegin(); it != idx.cend(); ++it) {
-    if (*it < nwords_) {
+    if (*it < nwords_ + nlabels_) {
       words.push_back(*it);
     } else {
       ngrams.push_back(*it);
@@ -639,7 +639,7 @@ void Dictionary::prune(std::vector<int32_t>& idx) {
   if (ngrams.size() != 0) {
     int32_t j = 0;
     for (const auto ngram : ngrams) {
-      pruneidx_[ngram - nwords_] = j;
+      pruneidx_[ngram - nwords_ - nlabels_] = j;
       j++;
     }
     idx.insert(idx.end(), ngrams.begin(), ngrams.end());

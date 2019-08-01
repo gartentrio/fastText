@@ -83,7 +83,7 @@ int32_t FastText::getWordId(const std::string& word) const {
 
 int32_t FastText::getSubwordId(const std::string& subword) const {
   int32_t h = dict_->hash(subword) % args_->bucket;
-  return dict_->nwords() + h;
+  return dict_->nwords() + dict_->nlabels() + h;
 }
 
 void FastText::getWordVector(Vector& vec, const std::string& word) const {
@@ -104,7 +104,7 @@ void FastText::getVector(Vector& vec, const std::string& word) const {
 void FastText::getSubwordVector(Vector& vec, const std::string& subword) const {
   vec.zero();
   int32_t h = dict_->hash(subword) % args_->bucket;
-  h = h + dict_->nwords();
+  h = h + dict_->nwords() + dict_->nlabels();
   addInputVector(vec, h);
 }
 
@@ -520,7 +520,7 @@ bool FastText::predictLine(
   predict(k, words, linePredictions, threshold);
   for (const auto& p : linePredictions) {
     predictions.push_back(
-        std::make_pair(std::exp(p.first), dict_->getLabel(p.second)));
+        std::make_pair(std::exp(p.first), dict_->getLabel(p.second - dict_->nwords())));
   }
 
   return true;
@@ -717,6 +717,9 @@ void FastText::trainThread(int32_t threadId) {
     real lr = args_->lr * (1.0 - progress);
     if (args_->model == model_name::sup) {
       localTokenCount += dict_->getLine(ifs, line, labels);
+      for (auto it = labels.begin(); it != labels.end(); ++it) {
+        *it -= dict_->nwords();
+      }
       supervised(state, lr, line, labels);
     } else if (args_->model == model_name::sent2vec) {
       localTokenCount += dict_->getLine(ifs, line, hashes, labels, state.rng, Dictionary::OMIT_EOS | Dictionary::OMIT_OOV);
@@ -801,8 +804,8 @@ std::shared_ptr<Matrix> FastText::createRandomMatrix() const {
 }
 
 std::shared_ptr<Matrix> FastText::createTrainOutputMatrix() const {
-  int64_t m =
-      (args_->model == model_name::sup) ? dict_->nlabels() : dict_->nwords();
+  int64_t m = (args_->model == model_name::sup) ? 
+      dict_->nlabels() : dict_->nwords() + dict_->nlabels();
   std::shared_ptr<DenseMatrix> output =
       std::make_shared<DenseMatrix>(m, args_->dim);
   output->zero();
@@ -857,8 +860,8 @@ void FastText::train(const Args& args) {
     }
     if (pretrained.args_->bucket == args_->bucket) {
       for (int32_t i = 0; i < args_->bucket; i++) {
-        pretrained.input_->setRowToMatrix(i + pretrained.dict_->nwords(), 
-            *input_, i + dict_->nwords());
+        pretrained.input_->setRowToMatrix(i + pretrained.dict_->nwords() + pretrained.dict_->nlabels(),
+            *input_, i + dict_->nwords() + dict_->nlabels());
       }
     }
   } else {
