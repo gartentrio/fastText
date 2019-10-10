@@ -7,9 +7,8 @@
 #
 
 CXX = c++
-CXXFLAGS = -Wall -pthread -std=c++0x -ffast-math -Wsuggest-final-methods -Wsuggest-override -Wodr -flto -ftree-loop-linear -floop-strip-mine -floop-block
-
-OBJS = args.o matrix.o dictionary.o loss.o productquantizer.o densematrix.o quantmatrix.o vector.o model.o utils.o meter.o fasttext.o
+CXXFLAGS = -Wall -pthread -std=c++11 -ffast-math -Wsuggest-final-methods -Wsuggest-override -Wodr -flto -ftree-loop-linear -floop-strip-mine -floop-block
+OBJS = args.o autotune.o matrix.o dictionary.o loss.o productquantizer.o densematrix.o quantmatrix.o vector.o model.o utils.o meter.o fasttext.o
 INCLUDES = -I.
 
 opt: CXXFLAGS += -O3 -funroll-loops -DNDEBUG
@@ -23,6 +22,9 @@ debug: fasttext
 
 args.o: src/args.cc src/args.h
 	$(CXX) $(CXXFLAGS) -c src/args.cc
+
+autotune.o: src/autotune.cc src/autotune.h
+	$(CXX) $(CXXFLAGS) -c src/autotune.cc
 
 matrix.o: src/matrix.cc src/matrix.h
 	$(CXX) $(CXXFLAGS) -c src/matrix.cc
