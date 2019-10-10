@@ -844,14 +844,12 @@ void FastText::train(const Args& args) {
     int32_t existing = dict_->addWords(pretrained.dict_);
     std::cerr << "Pretrained words: " << existing << std::endl;
 
-    shared_ = std::make_shared<std::vector<bool>>(dict_->nwords());
     input_ = createRandomMatrix();
     output_ = createTrainOutputMatrix();
     
     for (int32_t i = 0; i < pretrained.dict_->nwords(); i++) {
       int32_t k = dict_->getId(pretrained.dict_->getWord(i));
       if (k >= 0 && k < dict_->nwords()) {
-        (*shared_)[k] = true;
         pretrained.input_->setRowToMatrix(i, *input_, k);
         if (args_->model != model_name::sup) {
           pretrained.output_->setRowToMatrix(i, *output_, k);
@@ -879,8 +877,7 @@ void FastText::train(const Args& args) {
       args_->model == model_name::sup || 
       args_->model == model_name::sent2vec || 
       args_->model == model_name::pvdm);
-  model_ = std::make_shared<Model>(input_, output_, loss, normalizeGradient, 
-      args_->freeze ? shared_ : nullptr);
+  model_ = std::make_shared<Model>(input_, output_, loss, normalizeGradient);
   startThreads();
 }
 

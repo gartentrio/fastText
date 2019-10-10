@@ -37,10 +37,8 @@ Model::Model(
     std::shared_ptr<Matrix> wi,
     std::shared_ptr<Matrix> wo,
     std::shared_ptr<Loss> loss,
-    bool normalizeGradient,
-    std::shared_ptr<std::vector<bool>> wi_frozen)
-    : wi_(wi), wo_(wo), loss_(loss), normalizeGradient_(normalizeGradient), 
-      wi_frozen_(wi_frozen) {}
+    bool normalizeGradient)
+    : wi_(wi), wo_(wo), loss_(loss), normalizeGradient_(normalizeGradient) {}
 
 void Model::computeHidden(const std::vector<int32_t>& input, State& state)
     const {
@@ -89,9 +87,6 @@ void Model::update(
     grad.mul(1.0 / input.size());
   }
   for (auto it = input.cbegin(); it != input.cend(); ++it) {
-    if (wi_frozen_ && *it < wi_frozen_->size() && (*wi_frozen_)[*it]) {
-      continue;
-    }
     wi_->addVectorToRow(grad, *it, 1.0);
   }
 }

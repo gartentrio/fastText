@@ -28,15 +28,13 @@ class Model {
   std::shared_ptr<Matrix> wo_;
   std::shared_ptr<Loss> loss_;
   bool normalizeGradient_;
-  std::shared_ptr<std::vector<bool>> wi_frozen_;
 
  public:
   Model(
       std::shared_ptr<Matrix> wi,
       std::shared_ptr<Matrix> wo,
       std::shared_ptr<Loss> loss,
-      bool normalizeGradient,
-      std::shared_ptr<std::vector<bool>> wi_frozen = nullptr);
+      bool normalizeGradient);
   Model(const Model& model) = delete;
   Model(Model&& model) = delete;
   Model& operator=(const Model& other) = delete;

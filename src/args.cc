@@ -37,7 +37,6 @@ Args::Args() {
   verbose = 2;
   pretrainedVectors = "";
   pretrainedModel = "";
-  freeze = false;
   saveVectors = false;
   saveOutput = false;
 
@@ -177,9 +176,6 @@ void Args::parseArgs(const std::vector<std::string>& args) {
         pretrainedVectors = std::string(args.at(ai + 1));
       } else if (args[ai] == "-pretrainedModel") {
         pretrainedModel = std::string(args.at(ai + 1));
-      } else if (args[ai] == "-freeze") {
-        freeze = true;
-        ai--;
       } else if (args[ai] == "-saveOutput") {
         saveOutput = true;
         ai--;
@@ -269,9 +265,6 @@ void Args::printTrainingHelp() {
       << "  -pretrainedVectors  pretrained word vectors for supervised learning ["
       << pretrainedVectors << "]\n"
       << "  -pretrainedModel    pretrained model ["
-      << pretrainedModel << "]\n"
-      << "  -freeze             whether weights from pretrained model should be frozen ["
-      << boolToString(freeze) << "]\n"
       << pretrainedModel << "]\n"
       << "  -saveOutput         whether output params should be saved ["
       << boolToString(saveOutput) << "]\n"
