@@ -53,6 +53,7 @@ class Dictionary {
   int32_t nwords_;
   int32_t nlabels_;
   int64_t ntokens_;
+  int64_t ncounts_;
 
   int64_t pruneidx_size_;
   std::unordered_map<int32_t, int32_t> pruneidx_;
@@ -103,7 +104,7 @@ class Dictionary {
   void add(const std::string&);
   bool readWord(std::istream&, std::string&) const;
   void readFromFile(std::istream&);
-  int32_t addWords(std::shared_ptr<Dictionary>);
+  int32_t update(std::shared_ptr<Dictionary>, bool incremental);
   std::string getLabel(int32_t) const;
   void save(std::ostream&) const;
   void load(std::istream&);

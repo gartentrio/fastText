@@ -51,6 +51,8 @@ class Args {
   std::string pretrainedModel;
   bool saveOutput;
   bool saveVectors;
+  bool incremental;
+
 
   bool qout;
   bool retrain;

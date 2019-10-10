@@ -841,8 +841,8 @@ void FastText::train(const Args& args) {
             "Supervised models cannot be used as pretrained models");
     }
     
-    int32_t existing = dict_->addWords(pretrained.dict_);
-    std::cerr << "Pretrained words: " << existing << std::endl;
+    int32_t existing = dict_->update(pretrained.dict_, args_->incremental);
+    std::cerr << "Pretrained words: " << existing << " updated, " << (dict_->nwords() - existing) << " added" << std::endl;
 
     input_ = createRandomMatrix();
     output_ = createTrainOutputMatrix();
