@@ -530,7 +530,7 @@ int32_t Dictionary::getLine(
 
     ntokens++;
     if (type == entry_type::word) {
-      if (flags & OMIT_RND) {
+      if (flags & OMIT_FRQ) {
         if (discard(wid, uniform(rng))) {
           continue;
         }

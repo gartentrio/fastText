@@ -684,7 +684,7 @@ void FastText::trainThread(int32_t threadId) {
         localTokenCount += dict_->getLine(ifs, line, state.rng);
         skipgram(state, lr, line);
       } else if (args_->model == model_name::pvdm) {
-        localTokenCount += dict_->getLine(ifs, line, hashes, labels, state.rng, Dictionary::OMIT_EOS | Dictionary::OMIT_OOV);
+        localTokenCount += dict_->getLine(ifs, line, hashes, labels, state.rng, Dictionary::OMIT_EOS | Dictionary::OMIT_OOV | Dictionary::OMIT_FRQ);
         pvdm(state, lr, line, hashes, labels);
       }
       if (localTokenCount > args_->lrUpdateRate) {
@@ -829,8 +829,7 @@ void FastText::train(const Args& args) {
   auto loss = createLoss(output_);
   bool normalizeGradient = (
       args_->model == model_name::sup || 
-      args_->model == model_name::sent2vec || 
-      args_->model == model_name::pvdm);
+      args_->model == model_name::sent2vec);
   model_ = std::make_shared<Model>(input_, output_, loss, normalizeGradient);
   startThreads();
 }

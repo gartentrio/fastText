@@ -63,10 +63,10 @@ class Dictionary {
   static const std::string BOW;
   static const std::string EOW;
 
-  static const int32_t OMIT_EOS = 0x01;
-  static const int32_t OMIT_OOV = 0x02;
-  static const int32_t OMIT_RND = 0x04;
-  static const int32_t OMIT_LNG = 0x08;
+  static const int32_t OMIT_EOS = 0x01; // omit frequent words
+  static const int32_t OMIT_OOV = 0x02; // omit out-of-vocabulary words
+  static const int32_t OMIT_FRQ = 0x04; // omit frequent words
+  static const int32_t OMIT_LNG = 0x08; // omit long lines beyond MAX_LINE_SIZE
 
   explicit Dictionary(std::shared_ptr<Args>);
   explicit Dictionary(std::shared_ptr<Args>, std::istream&);
